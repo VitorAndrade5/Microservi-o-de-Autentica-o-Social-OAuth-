@@ -13,7 +13,7 @@ client = TestClient(app)
 def clear_test_database():
     fake_users_db.clear()
 
-
+#teste de integração para o endpoint 
 def test_read_root():
     response = client.get("/")
 
@@ -22,7 +22,7 @@ def test_read_root():
         "message": "Microserviço de Autenticação Social Ativo"
     }
 
-
+#teste de integração para o endpoint de login com um provedor válido
 def test_login_with_valid_provider():
     response = client.get("/auth/login/google")
 
@@ -30,14 +30,14 @@ def test_login_with_valid_provider():
     assert "google" in response.json()["auth_url"]
     assert response.json()["status"] == "simulated_redirect"
 
-
+#teste de integração para o endpoint de login com um provedor inválido
 def test_login_with_invalid_provider():
     response = client.get("/auth/login/facebook")
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Provedor não suportado"
 
-
+#teste de integração para o endpoint de callback com um código válido e criação do usuário
 @respx.mock
 def test_callback_success_and_user_creation():
     respx.post("https://oauth.fake/google/token").mock(
@@ -47,7 +47,7 @@ def test_callback_success_and_user_creation():
                 "email": "vito@exemplo.com",
                 "name": "Vito Andrade",
                 "provider": "google"
-            }
+            }   
         )
     )
 
@@ -58,7 +58,7 @@ def test_callback_success_and_user_creation():
     assert response.json()["user"]["email"] == "vito@exemplo.com"
     assert "vito@exemplo.com" in fake_users_db
 
-
+#teste de integração para o endpoint de callback com um código expirado ou inválido
 @respx.mock
 def test_callback_with_expired_code():
     respx.post("https://oauth.fake/google/token").mock(
@@ -73,7 +73,7 @@ def test_callback_with_expired_code():
     assert response.status_code == 400
     assert response.json()["detail"] == "Token/Código expirado ou inválido"
 
-
+#teste de integração para o endpoint de callback com um serviço externo indisponível
 @respx.mock
 def test_callback_external_service_unavailable():
     respx.post("https://oauth.fake/google/token").mock(
@@ -85,7 +85,7 @@ def test_callback_external_service_unavailable():
     assert response.status_code == 503
     assert response.json()["detail"] == "Serviço externo indisponível"
 
-
+#teste de integração para o endpoint de callback sem informar o código de autenticação
 def test_callback_without_code():
     response = client.get("/auth/callback?provider=google")
 
