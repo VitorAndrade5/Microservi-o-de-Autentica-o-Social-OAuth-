@@ -85,15 +85,14 @@ def test_callback_external_service_unavailable():
     assert response.status_code == 503
     assert response.json()["detail"] == "Serviço externo indisponível"
 
-#teste de integração para o endpoint de callback sem informar o código de autenticação
 def test_callback_without_code():
     response = client.get("/auth/callback?provider=google")
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Código de autenticação não informado"
     
-    def test_health_check_endpoint():
-        response = client.get("/health")
+def test_health_check_endpoint():
+    response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "UP"
     assert "metrics" in response.json()
