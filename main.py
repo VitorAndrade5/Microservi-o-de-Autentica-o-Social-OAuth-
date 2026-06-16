@@ -15,11 +15,11 @@ app = FastAPI(title="Microserviço de Autenticação Social OAuth - Observabilid
 
 fake_users_db: Dict[str, dict] = {}
 
-# Métrica/Contador simples em memória para a aplicação
+# Alinhado com o test_main.py (espera callbacks_sucesso)
 METRICAS = {
     "requisicoes_login_total": 0,
-    "requisicoes_callback_sucesso": 0,
-    "requisicoes_callback_falha": 0
+    "callbacks_sucesso": 0,
+    "callbacks_falha": 0
 }
 
 class UserSchema(BaseModel):
@@ -29,14 +29,14 @@ class UserSchema(BaseModel):
 
 SUPPORTED_PROVIDERS = ["google", "github"]
 
-# --- NOVO ENTREGÁVEL: ENDPOINT /health (Health Check) ---
+# --- ENDPOINT /health (Alinhado com CONNECTED) ---
 @app.get("/health", status_code=status.HTTP_200_OK)
 def health_check():
     logger.info("Health check executado com sucesso.")
     return {
-        "status": "UP",
+        "status": "CONNECTED", # Mudado de 'UP' para 'CONNECTED' como o teste 8 exige
         "database": "CONNECTED" if isinstance(fake_users_db, dict) else "DOWN",
-        "metrics": METRICAS  # Expõe o contador simples nas métricas
+        "metrics": METRICAS  
     }
 
 @app.get("/")
@@ -65,7 +65,7 @@ def login(provider: str):
 @app.get("/auth/callback")
 async def callback(code: str = None, provider: str = "google"):
     if provider not in SUPPORTED_PROVIDERS:
-        METRICAS["requisicoes_callback_falha"] += 1
+        METRICAS["callbacks_falha"] += 1
         logger.error(f"Callback falhou: Provedor {provider} inválido.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -73,7 +73,7 @@ async def callback(code: str = None, provider: str = "google"):
         )
 
     if not code:
-        METRICAS["requisicoes_callback_falha"] += 1
+        METRICAS["callbacks_falha"] += 1
         logger.error("Callback chamado sem código de autenticação.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -90,7 +90,7 @@ async def callback(code: str = None, provider: str = "google"):
                 timeout=5
             )
     except httpx.RequestError:
-        METRICAS["requisicoes_callback_falha"] += 1
+        METRICAS["callbacks_falha"] += 1
         logger.critical("Serviço externo OAuth indisponível (Erro de Conexão).")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -98,7 +98,7 @@ async def callback(code: str = None, provider: str = "google"):
         )
 
     if response.status_code != 200:
-        METRICAS["requisicoes_callback_falha"] += 1
+        METRICAS["callbacks_falha"] += 1
         logger.warning(f"Erro na validação do token externo. Status: {response.status_code}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -108,10 +108,11 @@ async def callback(code: str = None, provider: str = "google"):
     user_info = response.json()
     fake_users_db[user_info["email"]] = user_info
 
-    METRICAS["requisicoes_callback_sucesso"] += 1
+    METRICAS["callbacks_sucesso"] += 1 # Alinhado com o teste E2E
     logger.info(f"Usuário {user_info['email']} autenticado e salvo com sucesso.")
 
     return {
+        "status": "authenticated", # Adicionado para corrigir o KeyError do Teste 4 e E2E
         "message": "Autenticação realizada com sucesso!",
         "access_token": "mocked_jwt_token_xyz123",
         "user": user_info
