@@ -174,6 +174,15 @@ Testes para cenários de erro.
 Pipeline de CI com execução automática dos testes.
 Documentação dos cenários testados.
 
+Observabilidade e Quality Gates (Aula 4)
+
+Implementamos mecanismos de monitoramento contínuo e validação rigorosa de qualidade:
+
+- Endpoint `/health`: Retorna o status de saúde da aplicação, conexões simuladas e expõe métricas em tempo real.
+- Logs Estruturados: Uso da biblioteca nativa `logging` mapeando eventos cruciais (`INFO`, `WARNING`, `ERROR`, `CRITICAL`).
+- Métricas Simples: Contadores dinâmicos controlando requisições de sucesso e falha no ecossistema.
+- Quality Gate Definição: Configuração de barreira de qualidade no GitHub Actions através do `pytest-cov`, exigindo cobertura de teste mínima de 80% para aceitar commits na branch principal.
+
 Autores: 
 Vito Andrade
 Guilherme Abreu

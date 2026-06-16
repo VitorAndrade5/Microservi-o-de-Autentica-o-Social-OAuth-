@@ -1,6 +1,6 @@
 import pytest
 import httpx
-import respx
+import respx  
 
 from fastapi.testclient import TestClient
 from main import app, fake_users_db
@@ -91,3 +91,9 @@ def test_callback_without_code():
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Código de autenticação não informado"
+    
+    def test_health_check_endpoint():
+        response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "UP"
+    assert "metrics" in response.json()
