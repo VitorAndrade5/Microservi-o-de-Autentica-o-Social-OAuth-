@@ -183,6 +183,13 @@ Implementamos mecanismos de monitoramento contínuo e validação rigorosa de qu
 - Métricas Simples: Contadores dinâmicos controlando requisições de sucesso e falha no ecossistema.
 - Quality Gate Definição: Configuração de barreira de qualidade no GitHub Actions através do `pytest-cov`, exigindo cobertura de teste mínima de 80% para aceitar commits na branch principal.
 
+Relatório de Prevenção de Bugs
+
+O teste de integração/E2E implementado tenta evitar dois bugs críticos no microsserviço:
+
+1. Degradação Silenciosa por Instabilidade Externa (Timeout/Queda): Evita que uma queda ou lentidão nas APIs do Google ou GitHub trave o nosso servidor Python esperando uma resposta da rede. O teste garante que o sistema capture a falha instantaneamente e responda com `503 Service Unavailable`, mantendo a aplicação de pé.
+2. Vazamento de Requisições Malformadas: Impede que requisições sem códigos de autenticação válidos ou com provedores não suportados burlem a segurança, poluindo a memória ou o banco de dados do sistema com acessos inválidos.
+
 Autores: 
 Vito Andrade
 Guilherme Abreu
