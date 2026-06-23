@@ -2,6 +2,7 @@ fastapi
 uvicorn
 pytest
 httpx
-httpx2
+
 respx
 pytest-cov
+email-validator

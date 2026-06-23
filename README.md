@@ -20,7 +20,12 @@ O objetivo principal é demonstrar o funcionamento de uma API com autenticação
 
 ```txt
 microservico-oauth/
+├── app.py
 ├── main.py
+├── routes.py
+├── services.py
+├── storage.py
+├── schemas.py
 ├── test_main.py
 ├── requirements.txt
 ├── README.md
@@ -80,6 +85,20 @@ GET /auth/login/google
 Caso o provedor seja válido, a API retorna uma URL simulada de autenticação.
 
 Caso o provedor não seja suportado, a API retorna erro 400 Bad Request.
+
+Login com email e senha
+POST /auth/login
+
+Exemplo:
+
+POST /auth/login
+{
+  "email": "usuario@exemplo.com",
+  "password": "senhaSegura123",
+  "name": "Usuario Teste"
+}
+
+Essa rota permite o credenciamento de usuário por email/senha e salva o usuário em memória.
 
 Callback de autenticação
 GET /auth/callback?code=valid_code_123&provider=google

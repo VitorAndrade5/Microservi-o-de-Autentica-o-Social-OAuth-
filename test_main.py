@@ -1,9 +1,11 @@
 import pytest
 import httpx
-import respx  
+import respx
 
 from fastapi.testclient import TestClient
-from main import app, fake_users_db
+from app import app
+from services import METRICS, reset_metrics
+from storage import fake_users_db
 
 client = TestClient(app)
 
@@ -11,6 +13,7 @@ client = TestClient(app)
 def clear_test_database():
     """Garante o isolamento limpando o banco em memória antes de cada teste."""
     fake_users_db.clear()
+    reset_metrics()
 
 # 1. Teste de integração para a raiz (Adaptado para o padrão FastAPI)
 def test_read_root():
@@ -25,7 +28,49 @@ def test_login_with_valid_provider():
     assert "auth_url" in response.json()
     assert "google" in response.json()["auth_url"]
 
-# 3. Teste de login com um provedor inválido
+# 3. Teste de login por credenciais com email e senha válidos
+def test_login_with_credentials():
+    payload = {
+        "email": "usuario@exemplo.com",
+        "password": "senhaSegura123",
+        "name": "Usuario Teste"
+    }
+
+    response = client.post("/auth/login", json=payload)
+    assert response.status_code == 200
+    assert response.json()["status"] == "authenticated"
+    assert response.json()["user"]["email"] == payload["email"]
+    assert response.json()["user"]["provider"] == "credentials"
+    assert payload["email"] in fake_users_db
+
+# 4. Teste de login por credenciais com senha curta
+def test_login_with_invalid_password():
+    payload = {
+        "email": "usuario@exemplo.com",
+        "password": "123",
+        "name": "Usuario Teste"
+    }
+
+    response = client.post("/auth/login", json=payload)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Senha deve ter ao menos 6 caracteres"
+
+# 5. Teste de health metrics após login por credenciais
+def test_health_metrics_after_credentials_login():
+    payload = {
+        "email": "usuario@exemplo.com",
+        "password": "senhaSegura123",
+        "name": "Usuario Teste"
+    }
+
+    client.post("/auth/login", json=payload)
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json()["metrics"]["credentials_logins_total"] == 1
+    assert response.json()["metrics"]["requisicoes_login_total"] >= 1
+
+# 6. Teste de login com um provedor inválido
 def test_login_with_invalid_provider():
     response = client.get("/auth/login/facebook")
     assert response.status_code == 400
@@ -89,7 +134,7 @@ def test_health_check_endpoint():
 
 
 
-
+#teste E2E completo simulando toda a jornada real de um cliente
 @respx.mock
 def test_fluxo_completo_e2e_autenticacao_e_saude():
     """
@@ -117,6 +162,7 @@ def test_fluxo_completo_e2e_autenticacao_e_saude():
     assert response_health.status_code == 200
     assert response_health.json()["metrics"]["callbacks_sucesso"] >= 1
     
+#teste de mutação provocada para o cenário de login com um provedor inválido facebook
 def test_cenario_mutacao_provocada():
     resposta = client.get("/auth/login/facebook")
     
